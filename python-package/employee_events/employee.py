@@ -1,60 +1,32 @@
 # flake8: noqa
 
-# Import the QueryBase class
-#### YOUR CODE HERE
+# Employee-specific lookups and model features. Daily event totals and dated
+# notes are inherited from QueryBase through the same interface used by Team.
+
 from .query_base import QueryBase
 
-# Import dependencies needed for sql execution
-# from the `sql_execution` module
-#### YOUR CODE HERE
 from .sql_execution import QueryMixin
 
 
-# Define a subclass of QueryBase
-# called Employee
-#### YOUR CODE HERE
 class Employee(QueryBase):
 
-    # Set the class attribute `name`
-    # to the string "employee"
-    #### YOUR CODE HERE
+    # Shared queries use this value to select the employee table and employee_id.
     name = "employee"
 
-    # Define a method called `names`
-    # that receives no arguments
-    # This method should return a list of tuples
-    # from an sql execution
-    #### YOUR CODE HERE
     def names(self):
 
-        # Query 3
-        # Write an SQL query
-        # that selects two columns
-        # 1. The employee's full name
-        # 2. The employee's id
-        # This query should return the data
-        # for all employees in the database
-        #### YOUR CODE HERE
+        # Dropdown options are (full name, employee ID) tuples: the name is shown
+        # in the UI, while the ID is submitted as the selected entity.
         query_3 = """
         SELECT first_name || ' ' || last_name full_name, employee_id
         FROM employee
         """
         return self.query(query_3)
 
-    # Define a method called `username`
-    # that receives an `id` argument
-    # This method should return a list of tuples
-    # from an sql execution
-    #### YOUR CODE HERE
     def username(self, id):
 
-        # Query 4
-        # Write an SQL query
-        # that selects an employees full name
-        # Use f-string formatting and a WHERE filter
-        # to only return the full name of the employee
-        # with an id equal to the id argument
-        #### YOUR CODE HERE
+        # A matching ID returns [(full_name,)]; no match returns an empty list.
+        # As in the shared queries, the interpolated ID must be a trusted number.
         query_4 = f"""
         SELECT first_name || ' ' || last_name full_name
         FROM employee
@@ -62,16 +34,11 @@ class Employee(QueryBase):
         """
         return self.query(query_4)
 
-    # Below is method with an SQL query
-    # This SQL query generates the data needed for
-    # the machine learning model.
-    # Without editing the query, alter this method
-    # so when it is called, a pandas dataframe
-    # is returns containing the execution of
-    # the sql query
-    #### YOUR CODE HERE
     def model_data(self, id):
 
+        # Collapse all stored events for one employee into a single feature row.
+        # Positive precedes Negative, matching the classifier's feature order;
+        # BarChart renames these aliases to the feature names used during training.
         query_ = f"""
         SELECT SUM(positive_events) AS Positive , SUM(negative_events) AS Negative
         FROM {self.name}

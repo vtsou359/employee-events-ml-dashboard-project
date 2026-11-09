@@ -1,72 +1,42 @@
 # flake8: noqa
 
-# Import the QueryBase class
-# YOUR CODE HERE
+# Team-specific lookups and model features. The inherited event_counts() method
+# aggregates across the team, while model_data() keeps each member separate.
+
 from .query_base import QueryBase
 
-# Import dependencies for sql execution
-#### YOUR CODE HERE
 from .sql_execution import QueryMixin
 
 
-# Create a subclass of QueryBase
-# called  `Team`
-#### YOUR CODE HERE
 class Team(QueryBase):
 
-    # Set the class attribute `name`
-    # to the string "team"
-    #### YOUR CODE HERE
+    # Shared queries use this value to select the team table and team_id.
     name = "team"
 
-    # Define a `names` method
-    # that receives no arguments
-    # This method should return
-    # a list of tuples from an sql execution
-    #### YOUR CODE HERE
     def names(self):
 
-        # Query 5
-        # Write an SQL query that selects
-        # the team_name and team_id columns
-        # from the team table for all teams
-        # in the database
-        #### YOUR CODE HERE
+        # Return (team name, team ID) tuples for the same dropdown interface
+        # used by Employee.names().
         query_5 = f"""
         SELECT team_name, team_id
         FROM team
         """
         return self.query(query_5)
 
-    # Define a `username` method
-    # that receives an ID argument
-    # This method should return
-    # a list of tuples from an sql execution
-    #### YOUR CODE HERE
     def username(self, id):
 
-        # Query 6
-        # Write an SQL query
-        # that selects the team_name column
-        # Use f-string formatting and a WHERE filter
-        # to only return the team name related to
-        # the ID argument
-        #### YOUR CODE HERE
+        # Return [(team_name,)] for a matching ID, or [] when the ID is absent.
+        # As in the shared queries, the interpolated ID must be a trusted number.
         query_6 = f"""
         SELECT team_name FROM team WHERE team_id = {id}
         """
         return self.query(query_6)
 
-    # Below is method with an SQL query
-    # This SQL query generates the data needed for
-    # the machine learning model.
-    # Without editing the query, alter this method
-    # so when it is called, a pandas dataframe
-    # is returns containing the execution of
-    # the sql query
-    #### YOUR CODE HERE
     def model_data(self, id):
 
+        # Filter to the team, then sum each member's event history independently.
+        # The outer SELECT drops employee_id, leaving only the two model features
+        # in training order. BarChart predicts per member and averages the scores.
         query__ = f"""
             SELECT positive_events, negative_events FROM (
                     SELECT employee_id
